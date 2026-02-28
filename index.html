@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clarity Systems — Weekly Intelligence Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f3ef;
+    --gold: #c9a84c;
+    --gold-light: #e8d5a3;
+    --gold-dim: rgba(201,168,76,0.12);
+    --gray-mid: #666;
+    --gray-light: #999;
+    --rule: rgba(201,168,76,0.3);
+    --field-line: rgba(255,255,255,0.28);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d0d;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 70% 40% at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 25% at 95% 85%, rgba(201,168,76,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .watermark {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .watermark-text {
+    position: absolute;
+    top: -20%; left: -5%;
+    width: 150%;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.35em;
+    color: rgba(201,168,76,0.04);
+    transform: rotate(-28deg);
+    line-height: 5em;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  /* ERROR STATE */
+  .error-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #0a0a0a;
+    z-index: 200;
+    place-items: center;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .error-screen.show { display: grid; }
+
+  .error-mark {
+    width: 56px; height: 56px;
+    border: 1px solid rgba(255,80,80,0.5);
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    color: rgba(255,80,80,0.7);
+  }
+
+  .error-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+  }
+
+  .error-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-light);
+    letter-spacing: 0.08em;
+    line-height: 2;
+    max-width: 400px;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 80px 48px 120px;
+  }
+
+  /* HEADER */
+  .header {
+    margin-bottom: 48px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards;
+  }
+
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+
+  .wordmark-mark {
+    width: 30px; height: 30px;
+    border: 1px solid var(--gold);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .wordmark-mark::before {
+    content: '';
+    width: 10px; height: 10px;
+    background: var(--gold);
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  }
+
+  .wordmark-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  .header-rule {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold) 0%, rgba(201,168,76,0.08) 100%);
+    margin-bottom: 32px;
+  }
+
+  .header-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 40px;
+  }
+
+  .client-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 44px;
+    font-weight: 300;
+    line-height: 1.1;
+  }
+
+  .client-name em { font-style: italic; color: var(--gold-light); }
+
+  .week-badge { text-align: right; flex-shrink: 0; }
+
+  .week-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 52px;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .week-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--gray-light);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .header-subtitle {
+    font-size: 11px;
+    color: var(--gray-light);
+    letter-spacing: 0.1em;
+    margin-top: 14px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* PROP BANNER */
+  .prop-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: rgba(201,168,76,0.07);
+    border: 1px solid rgba(201,168,76,0.22);
+    padding: 14px 20px;
+    margin-bottom: 48px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.1s forwards;
+  }
+
+  .prop-icon { font-size: 13px; color: var(--gold); flex-shrink: 0; padding-top: 1px; }
+
+  .prop-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    color: var(--gold-light);
+    line-height: 1.8;
+  }
+
+  /* PROGRESS */
+  .progress-track {
+    margin-bottom: 64px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.18s forwards;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--gray-light);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .progress-bar { height: 2px; background: rgba(255,255,255,0.08); }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 100%);
+    width: 0%;
+    transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .progress-pips { display: flex; justify-content: space-between; margin-top: 10px; }
+  .pip { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.1); }
+  .pip.active { background: var(--gold); }
+
+  /* SECTIONS */
+  .section {
+    margin-bottom: 60px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards;
+  }
+
+  .section:nth-child(1) { animation-delay: 0.22s; }
+  .section:nth-child(2) { animation-delay: 0.32s; }
+  .section:nth-child(3) { animation-delay: 0.42s; }
+  .section:nth-child(4) { animation-delay: 0.52s; }
+  .section:nth-child(5) { animation-delay: 0.62s; }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 32px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .section-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 23px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  .section-desc {
+    font-size: 10px;
+    color: var(--gray-light);
+    font-family: 'DM Mono', monospace;
+    margin-left: auto;
+    flex-shrink: 0;
+    letter-spacing: 0.08em;
+  }
+
+  /* FIELDS */
+  .field { margin-bottom: 36px; }
+
+  .field-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gold-light);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .field-required::after { content: ' *'; color: var(--gold); }
+
+  .field-hint {
+    display: block;
+    font-size: 11px;
+    color: var(--gray-light);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    margin-bottom: 12px;
+    font-style: italic;
+    letter-spacing: 0.03em;
+    line-height: 1.5;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: none;
+    border-bottom: 2px solid var(--field-line);
+    border-radius: 0;
+    padding: 14px 4px 12px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    outline: none;
+    transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+    -webkit-appearance: none;
+  }
+
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  textarea:focus {
+    border-bottom-color: var(--gold);
+    background: rgba(201,168,76,0.05);
+    box-shadow: 0 2px 0 0 rgba(201,168,76,0.15);
+  }
+
+  input[type="text"]:not(:placeholder-shown),
+  input[type="number"]:not(:placeholder-shown),
+  textarea:not(:placeholder-shown) {
+    border-bottom-color: rgba(255,255,255,0.5);
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: rgba(255,255,255,0.22);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  textarea { resize: none; min-height: 88px; line-height: 1.8; }
+  .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; }
+
+  /* CONFIDENCE SCORE */
+  .score-row { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+
+  .score-btn {
+    width: 38px; height: 38px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: grid;
+    place-items: center;
+  }
+
+  .score-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.06); }
+  .score-btn.selected { background: var(--gold); border-color: var(--gold); color: var(--black); font-weight: 500; }
+
+  .score-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--gray-light);
+  }
+
+  /* PRIOR WEEK */
+  .prior-week {
+    background: rgba(201,168,76,0.07);
+    border-left: 2px solid var(--gold);
+    padding: 16px 20px;
+    margin-bottom: 28px;
+  }
+
+  .prior-week-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .prior-week-text {
+    font-size: 16px;
+    color: rgba(255,255,255,0.6);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    line-height: 1.5;
+  }
+
+  /* SPRINT SECTION — hidden on week 1 if no goal set yet */
+  .sprint-section { display: block; }
+
+  /* SUBMIT */
+  .submit-zone {
+    margin-top: 72px;
+    padding-top: 48px;
+    border-top: 1px solid var(--rule);
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.72s forwards;
+  }
+
+  .submit-notice {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-light);
+    letter-spacing: 0.05em;
+    margin-bottom: 32px;
+    line-height: 2.1;
+  }
+
+  .submit-notice strong { color: var(--gold-light); font-weight: 400; }
+
+  .btn-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 18px 44px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-submit::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: translateX(-101%);
+    transition: transform 0.3s ease;
+  }
+
+  .btn-submit:hover::before { transform: translateX(0); }
+  .btn-submit:hover { color: var(--black); }
+  .btn-submit span, .btn-arrow { position: relative; z-index: 1; }
+  .btn-arrow { font-size: 16px; transition: transform 0.3s ease; }
+  .btn-submit:hover .btn-arrow { transform: translateX(4px); }
+
+  /* LEGAL */
+  .legal-footer {
+    margin-top: 64px;
+    padding: 32px 28px;
+    border: 1px solid rgba(201,168,76,0.18);
+    background: rgba(201,168,76,0.03);
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.85s forwards;
+  }
+
+  .legal-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .legal-title::after { content: ''; flex: 1; height: 1px; background: rgba(201,168,76,0.2); }
+
+  .legal-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    color: rgba(255,255,255,0.33);
+    line-height: 1.95;
+    letter-spacing: 0.04em;
+  }
+
+  .legal-text strong { color: rgba(255,255,255,0.55); font-weight: 500; }
+
+  .bottom-bar {
+    margin-top: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.95s forwards;
+  }
+
+  .bottom-bar-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.18);
+    letter-spacing: 0.1em;
+  }
+
+  .secure-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.22);
+    letter-spacing: 0.08em;
+  }
+
+  .lock {
+    width: 12px; height: 11px;
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 1px;
+    position: relative;
+    margin-top: 2px;
+  }
+
+  .lock::before {
+    content: '';
+    position: absolute;
+    top: -6px; left: 2px;
+    width: 6px; height: 6px;
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 50%;
+    border-bottom: none;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SUCCESS */
+  .success-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #0a0a0a;
+    z-index: 100;
+    place-items: center;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .success-overlay.show { display: grid; }
+
+  .success-mark {
+    width: 64px; height: 64px;
+    border: 1px solid var(--gold);
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+    color: var(--gold);
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .success-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    animation: fadeUp 0.5s ease 0.1s both;
+  }
+
+  .success-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-light);
+    letter-spacing: 0.1em;
+    line-height: 2;
+    animation: fadeUp 0.5s ease 0.2s both;
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 48px 24px 80px; }
+    .client-name { font-size: 34px; }
+    .week-number { font-size: 40px; }
+    .metrics-grid { grid-template-columns: 1fr; }
+    .header-meta { flex-direction: column; gap: 16px; }
+    .week-badge { text-align: left; }
+    .score-btn { width: 32px; height: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Watermark -->
+<div class="watermark" aria-hidden="true">
+  <div class="watermark-text">PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL — PROPRIETARY — CLARITY SYSTEMS LLC — CONFIDENTIAL</div>
+</div>
+
+<!-- Error screen -->
+<div class="error-screen" id="errorScreen">
+  <div class="error-mark">✕</div>
+  <div class="error-title">Invalid access link.</div>
+  <div class="error-sub">This URL is not valid or has expired.<br>Contact your Clarity Systems advisor for a new link.<br><br>marcus@claritysystems.com</div>
+</div>
+
+<!-- Success overlay -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-mark">✓</div>
+  <div class="success-title">Brief submitted.</div>
+  <div class="success-sub" id="successSub">Your brief will be ready Monday by 7 AM.</div>
+</div>
+
+<div class="container" id="mainContent">
+
+  <div class="header">
+    <div class="wordmark">
+      <div class="wordmark-mark"></div>
+      <div class="wordmark-text">Clarity Systems</div>
+    </div>
+    <div class="header-rule"></div>
+    <div class="header-meta">
+      <div>
+        <div class="client-name" id="clientNameDisplay">Loading...</div>
+        <div class="header-subtitle" id="headerSubtitle">WEEKLY INTELLIGENCE BRIEF · CONFIDENTIAL</div>
+      </div>
+      <div class="week-badge">
+        <div class="week-number" id="weekNumber">—</div>
+        <div class="week-label">Week of Sprint</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prop-banner">
+    <div class="prop-icon">⬡</div>
+    <div class="prop-text">
+      This intake form and its methodology are the exclusive intellectual property of Clarity Systems LLC. &nbsp;Unauthorized reproduction, replication, or distribution in any form is strictly prohibited. &nbsp;See full legal notice below.
+    </div>
+  </div>
+
+  <div class="progress-track">
+    <div class="progress-label">
+      <span>Sprint Progress</span>
+      <span id="sprintDayLabel">Day — of 30</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-pips" id="progressPips"></div>
+  </div>
+
+  <form id="briefForm">
+
+    <!-- 01 Numbers -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-number">01 —</span>
+        <span class="section-title">This Week's Numbers</span>
+        <span class="section-desc">Required</span>
+      </div>
+      <div class="metrics-grid">
+        <div class="field">
+          <label class="field-label field-required">Revenue This Week</label>
+          <span class="field-hint">Actual collected, not invoiced</span>
+          <input type="text" placeholder="e.g. $42,000" name="revenue">
+        </div>
+        <div class="field">
+          <label class="field-label field-required">Active Pipeline</label>
+          <span class="field-hint">Total value of open opportunities</span>
+          <input type="text" placeholder="e.g. $380,000" name="pipeline">
+        </div>
+        <div class="field">
+          <label class="field-label field-required">Cash on Hand</label>
+          <span class="field-hint">Operating account balance</span>
+          <input type="text" placeholder="e.g. $95,000" name="cash">
+        </div>
+        <div class="field">
+          <label class="field-label field-required">Team Headcount</label>
+          <span class="field-hint">FTE + active contractors</span>
+          <input type="number" placeholder="e.g. 14" name="headcount">
+        </div>
+        <div class="field">
+          <label class="field-label">Utilization Rate</label>
+          <span class="field-hint">Billable hours ÷ available hours</span>
+          <input type="text" placeholder="e.g. 78%" name="utilization">
+        </div>
+        <div class="field">
+          <label class="field-label">Active Engagements</label>
+          <span class="field-hint">Clients currently in delivery</span>
+          <input type="number" placeholder="e.g. 6" name="clients">
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 Decision Intelligence -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-number">02 —</span>
+        <span class="section-title">Decision Intelligence</span>
+        <span class="section-desc">Core of your brief</span>
+      </div>
+
+      <div class="prior-week" id="priorWeekBlock" style="display:none;">
+        <div class="prior-week-label">↑ Last Week's Open Decision — Carried Forward</div>
+        <div class="prior-week-text" id="priorWeekText"></div>
+      </div>
+
+      <div class="field">
+        <label class="field-label field-required">Biggest Decision You're Sitting On</label>
+        <span class="field-hint">The one taking up mental space. Not the urgent — the important.</span>
+        <textarea name="big_decision" placeholder="Describe the decision, not the symptoms..."></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What Information Are You Missing</label>
+        <span class="field-hint">What would make this decision obvious if you had it?</span>
+        <textarea name="missing_info" placeholder="Data, clarity, or confidence you don't have yet..."></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Confidence in Current Direction</label>
+        <span class="field-hint">How certain are you about the path you're on right now?</span>
+        <div class="score-row" id="confidenceScore">
+          <button type="button" class="score-btn" data-val="1">1</button>
+          <button type="button" class="score-btn" data-val="2">2</button>
+          <button type="button" class="score-btn" data-val="3">3</button>
+          <button type="button" class="score-btn" data-val="4">4</button>
+          <button type="button" class="score-btn" data-val="5">5</button>
+          <button type="button" class="score-btn" data-val="6">6</button>
+          <button type="button" class="score-btn" data-val="7">7</button>
+          <button type="button" class="score-btn" data-val="8">8</button>
+          <button type="button" class="score-btn" data-val="9">9</button>
+          <button type="button" class="score-btn" data-val="10">10</button>
+        </div>
+        <div class="score-labels">
+          <span>No clarity</span>
+          <span>Fully certain</span>
+        </div>
+        <input type="hidden" name="confidence" id="confidenceVal">
+      </div>
+
+      <div class="field" id="lastDecisionField" style="display:none;">
+        <label class="field-label">Last Week's Decision — What Happened</label>
+        <span class="field-hint">Resolved, still open, or changed direction entirely?</span>
+        <textarea name="last_decision_status" placeholder="Resolved / Still open / Changed direction — and why..."></textarea>
+      </div>
+    </div>
+
+    <!-- 03 Operational Pulse -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-number">03 —</span>
+        <span class="section-title">Operational Pulse</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What's Working — Protect This</label>
+        <span class="field-hint">Momentum we should flag and preserve in your brief.</span>
+        <textarea name="working" placeholder="Specific, not general..."></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label field-required">The Primary Bottleneck This Week</label>
+        <span class="field-hint">One thing. The constraint underneath everything else.</span>
+        <textarea name="friction" placeholder="Name it directly — not a list..."></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Risks to Flag</label>
+        <span class="field-hint">Client, team, cash, or market. Early signals welcome.</span>
+        <textarea name="risks" placeholder="Anything that could become a problem in 30 days..."></textarea>
+      </div>
+    </div>
+
+    <!-- 04 Sprint -->
+    <div class="section sprint-section" id="sprintSection">
+      <div class="section-header">
+        <span class="section-number">04 —</span>
+        <span class="section-title">Sprint Accountability</span>
+        <span class="section-desc" id="sprintDayBadge">Day — of 30</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label field-required">Where Are You vs. Your Day 30 Goal</label>
+        <span class="field-hint" id="sprintGoalHint">Your original target is loading...</span>
+        <textarea name="sprint_status" placeholder="On track / Behind / Ahead — and why..."></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What Must Be True by Next Friday</label>
+        <span class="field-hint">Specific. Measurable. Not aspirational.</span>
+        <textarea name="next_week_target" placeholder="By Friday I will have..."></textarea>
+      </div>
+    </div>
+
+    <!-- 05 Open -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-number">05 —</span>
+        <span class="section-title">Open Intelligence</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label">What Kept You Up This Week</label>
+        <span class="field-hint">The thing you haven't said out loud yet. This is the right place.</span>
+        <textarea name="kept_up" placeholder="Off the record. On the brief."></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Anything Else for Your Brief</label>
+        <span class="field-hint">Context or nuance that doesn't fit the categories above.</span>
+        <textarea name="open_notes" placeholder="Free field..."></textarea>
+      </div>
+    </div>
+
+    <div class="submit-zone">
+      <p class="submit-notice">
+        Your brief will be in your inbox by <strong>Monday 7 AM.</strong><br>
+        Deadline: <strong>Friday 5 PM.</strong> &nbsp;Late submissions generate from prior week data.<br>
+        All responses are confidential and used solely to produce your weekly intelligence brief.
+      </p>
+      <button type="submit" class="btn-submit">
+        <span>Submit This Week's Brief</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+
+  </form>
+
+  <div class="legal-footer">
+    <div class="legal-title">Intellectual Property &amp; Legal Notice</div>
+    <p class="legal-text">
+      <strong>© 2026 Clarity Systems LLC. All Rights Reserved.</strong> This Weekly Intelligence Brief intake form, including its structure, question methodology, decision-scoring framework, sprint accountability model, progressive intelligence architecture, confidence-scoring system, and all associated processes, outputs, and derivative works, constitute proprietary trade secrets and intellectual property exclusively owned by Clarity Systems LLC.<br><br>
+      <strong>Prohibited Uses:</strong> The reproduction, replication, distribution, adaptation, reverse-engineering, or derivative use of this form, its methodology, its question framework, its scoring system, or any component thereof — in whole or in part — without prior written authorization from Clarity Systems LLC is strictly prohibited and may constitute misappropriation of trade secrets under the Defend Trade Secrets Act (18 U.S.C. § 1836) and applicable state law. This prohibition applies to all parties, including but not limited to current and former clients, contractors, employees, advisors, and third-party vendors.<br><br>
+      <strong>No Internal Replication:</strong> Clients expressly acknowledge that the intelligence methodology, behavioral enforcement model, decision-scoring architecture, and brief-generation process delivered by Clarity Systems LLC cannot be replicated by internal employees, offshore contractors, executive assistants, or any third-party service provider. Any attempt to independently operationalize, rebuild, or commercially exploit this system without an active, authorized service agreement constitutes willful misappropriation.<br><br>
+      <strong>Confidentiality:</strong> All information submitted through this form is held in strict confidence and used exclusively to generate the client's weekly executive intelligence brief. Clarity Systems LLC does not sell, license, or disclose client data to any third party.<br><br>
+      Violation of these terms may result in immediate termination of service and pursuit of all available legal remedies including injunctive relief and damages. Legal inquiries: <strong>legal@claritysystems.com</strong>
+    </p>
+  </div>
+
+  <div class="bottom-bar">
+    <span class="bottom-bar-text">Clarity Systems LLC &nbsp;·&nbsp; Proprietary &amp; Confidential &nbsp;·&nbsp; 2026</span>
+    <div class="secure-badge">
+      <div class="lock"></div>
+      <span>256-bit Encrypted</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CLIENT DATABASE
+// Add each new client here when they sign up.
+// URL will be: index.html?client=their-id
+// ─────────────────────────────────────────────
+const CLIENTS = {
+  "toni-debelic": {
+    first: "Toni",
+    company: "OpsKings",
+    tier: "Standard",
+    week: 1,
+    sprint_day: 7,
+    day30_goal: "Reduce decision lag from 3 weeks to 5 days",
+    last_decision: ""
+  },
+  "mike-trede": {
+    first: "Mike",
+    company: "Innovative Business Solutions",
+    tier: "Pilot",
+    week: 1,
+    sprint_day: 7,
+    day30_goal: "Eliminate the weekly all-hands status meeting by replacing it with the brief",
+    last_decision: ""
+  },
+  "nicholas-friedman": {
+    first: "Nicholas",
+    company: "Templar Shield",
+    tier: "Premium",
+    week: 1,
+    sprint_day: 7,
+    day30_goal: "Identify and resolve the top 3 decisions currently in stasis",
+    last_decision: ""
+  },
+  "herag-haleblian": {
+    first: "Herag",
+    company: "KRE Consulting",
+    tier: "Standard",
+    week: 1,
+    sprint_day: 7,
+    day30_goal: "Build a repeatable weekly decision review process",
+    last_decision: ""
+  },
+  "carrie-ferroukhi": {
+    first: "Carrie",
+    company: "Arcus Advisors",
+    tier: "Standard",
+    week: 1,
+    sprint_day: 7,
+    day30_goal: "Reduce time spent in reactive mode by 40%",
+    last_decision: ""
+  },
+  "candus-hinderer": {
+    first: "Candus",
+    company: "Arcus Advisors",
+    tier: "Standard",
+    week: 1,
+    sprint_day: 7,
+    day30_goal: "Reduce time spent in reactive mode by 40%",
+    last_decision: ""
+  },
+  "gans-subramanian": {
+    first: "Gans",
+    company: "B-TRNSFRMD",
+    tier: "Pilot",
+    week: 1,
+    sprint_day: 7,
+    day30_goal: "Surface and resolve the single biggest operational bottleneck",
+    last_decision: ""
+  },
+  "piper-carr": {
+    first: "Piper",
+    company: "Dojo Partners",
+    tier: "Standard",
+    week: 1,
+    sprint_day: 7,
+    day30_goal: "Clarify the firm's next 90-day strategic priority",
+    last_decision: ""
+  }
+};
+
+// ─────────────────────────────────────────────
+// LOAD CLIENT FROM URL PARAMETER
+// ─────────────────────────────────────────────
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+function formatDate() {
+  return new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+}
+
+function buildPips(sprintDay) {
+  const pips = document.getElementById('progressPips');
+  const total = 8;
+  const filled = Math.min(Math.ceil((sprintDay / 30) * total), total);
+  for (let i = 0; i < total; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'pip' + (i < filled ? ' active' : '');
+    pips.appendChild(pip);
+  }
+}
+
+window.addEventListener('load', () => {
+  const clientId = getParam('client');
+
+  if (!clientId || !CLIENTS[clientId]) {
+    document.getElementById('errorScreen').classList.add('show');
+    document.getElementById('mainContent').style.display = 'none';
+    return;
+  }
+
+  const c = CLIENTS[clientId];
+
+  // Populate header
+  const nameParts = c.company.split(' ');
+  const lastName = nameParts.pop();
+  const firstName = nameParts.join(' ');
+  document.getElementById('clientNameDisplay').innerHTML =
+    (firstName ? firstName + ' <em>' + lastName + '</em>' : '<em>' + lastName + '</em>');
+
+  document.getElementById('headerSubtitle').textContent =
+    'WEEKLY INTELLIGENCE BRIEF · ' + formatDate() + ' · CONFIDENTIAL';
+
+  document.getElementById('weekNumber').textContent =
+    String(c.week).padStart(2, '0');
+
+  // Sprint progress
+  const sprintDay = c.sprint_day;
+  const pct = Math.round((sprintDay / 30) * 100);
+  document.getElementById('sprintDayLabel').textContent = 'Day ' + sprintDay + ' of 30';
+  document.getElementById('sprintDayBadge').textContent = 'Day ' + sprintDay + ' of 30';
+  document.getElementById('sprintGoalHint').textContent =
+    'Your original target: "' + c.day30_goal + '"';
+  buildPips(sprintDay);
+
+  setTimeout(() => {
+    document.getElementById('progressFill').style.width = pct + '%';
+  }, 700);
+
+  // Prior week decision (week 2+)
+  if (c.week > 1 && c.last_decision) {
+    document.getElementById('priorWeekBlock').style.display = 'block';
+    document.getElementById('priorWeekText').textContent = '"' + c.last_decision + '"';
+    document.getElementById('lastDecisionField').style.display = 'block';
+  }
+
+  // Success message personalized
+  document.getElementById('successSub').textContent =
+    c.first + ', your brief will be ready Monday by 7 AM.\nClarity Systems will follow up if anything needs clarification.';
+});
+
+// Score buttons
+document.querySelectorAll('.score-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#confidenceScore .score-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('confidenceVal').value = btn.dataset.val;
+  });
+});
+
+// Form submit
+document.getElementById('briefForm').addEventListener('submit', e => {
+  e.preventDefault();
+  document.getElementById('successOverlay').classList.add('show');
+});
+</script>
+
+</body>
+</html>
